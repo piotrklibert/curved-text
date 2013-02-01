@@ -23,16 +23,20 @@
        [half-r (/ r 2)]
        [x (- x half-r)]
        [y (- y half-r)])
-    (send dc set-brush "white" 'transparent)
-    (send dc draw-ellipse x y r r)
-    (send dc set-brush old-brush)))
-
+    (send* dc 
+      (set-brush "white" 'transparent)
+      (draw-ellipse x y r r)
+      (set-brush old-brush))))
+  
 (define (draw-path dc controls)
-  (let 
-      ([path  (new dc-path%)])
-    (send/apply path move-to  (car controls))
-    (send/apply path curve-to (flatten (cdr controls)))
-    (send dc draw-path path)))
+  (define path (new dc-path%))
+  (match 
+      controls
+    [(list (list x0 y0) (list x1 y1) (list x2 y2) (list x3 y3))
+     (send* path 
+       (move-to x0 y0)
+       (curve-to x1 y1 x2 y2 x3 y3))
+     (send dc draw-path path)]))
   
 (define (show-plot bitmap)
   (let* 

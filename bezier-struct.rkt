@@ -1,6 +1,6 @@
 #lang racket
-(require racket/draw)
 (require srfi/26)
+(require racket/draw)
 
 (require "binary-search.rkt")
 (require "bezier-math.rkt")
@@ -95,17 +95,16 @@
                                                 [(cons a b) (point a b)]) 
                                               points-or-pairs)])))
 
-(define (make-points controls ts)
-  (let
-      ([controls-x (map point-x controls)]
-       [controls-y (map point-y controls)])
-  (map (cut point-at controls-x controls-y <>) ts)))
+(define-syntax-rule (define-maker name kind)
+  (define (name controls ts)
+    (let
+        ([controls-x (map point-x controls)]
+         [controls-y (map point-y controls)])
+      (map (cut kind controls-x controls-y <>) ts))))
 
-(define (make-angles controls ts)
-  (let
-      ([controls-x (map point-x controls)]
-       [controls-y (map point-y controls)])
-  (map (cut angle-at controls-x controls-y <>) ts)))
+(define-maker make-points point-at)
+(define-maker make-angles angle-at)
+
 
 (define (make-lengths points)
   (let loop ([last-point (first points)]

@@ -1,26 +1,28 @@
 #lang racket/gui
+(require srfi/26)
 
 (require "bezier-struct.rkt")
 (require "bezier-gui.rkt")
 
-(define initial-controls (list->vector 
+(define default-controls (list->vector 
                           (pairs->points '((10 90) 
                                            (100 15) 
                                            (300 470) 
                                            (340 40)))))
-
+(define default-font (make-font #:size 28
+                                #:weight 'bold
+                                #:family 'roman))
 (define curved-text-editor%
   (class canvas%
-    (init word)
-    (define text word)
-    (define font (make-font #:size 28 
-                            #:family 'roman 
-                            #:weight 'bold))
+    (init-field [text           "10Clouds"] 
+                [font           default-font]
+                [control-radius 15])
     
+    (define controls       default-controls)
     (define active-control #false)
-    (define controls       initial-controls)
+    (define control-margin 5)
     
-    ;; this is an attempt to reduce number of redraws, but
+    ;; this is an attempt to reduce the number of redraws, but
     ;; I don't think it helped much
     (define prev-mouse-pos     (point 0 0))
     (define min-animation-dist 3)
@@ -30,23 +32,24 @@
     ;;
     ;; Private helper methods.
     ;;
-    (define (get-own-dc) ;; and set smoothing by the way
+    (define/private (get-own-dc) ;; and set smoothing by the way
       (let ([dc (send this get-dc)])
         (send dc set-smoothing 'smoothed)
         dc))
     
-    (define (move-active-control where) 
+    (define/private (move-active-control where) 
       (vector-set! controls active-control where)) 
     
-    (define (which-control-clicked? click-pos)
+    (define/private (which-control-clicked click-pos)
       (let
           ([controls-count (vector-length controls)]
-           [get-control    (curry vector-ref controls)]
-           [dist-to-point  (curry points-distance click-pos)])
+           [get-control    (cut vector-ref controls <>)]
+           [dist-to-point  (cut points-distance click-pos <>)])
         (let check-controls ([i 0])
           (if (>= i controls-count) 
               #false ;; none of control points is near
-              (if (< (dist-to-point (get-control i)) 20) 
+              (if (< (dist-to-point (get-control i)) 
+                     (+ control-radius control-margin)) 
                   i ;; return index of nearby control
                   (check-controls (add1 i)))))))
     
@@ -54,16 +57,18 @@
     ;;
     ;; Private drawing helpers.
     ;;
-    (define (draw-supporting-curve dc) 
+    (define/private (draw-supporting-curve dc) 
       (draw-path dc (points->pairs controls)))
     
-    (define (draw-controls dc)
+    (define/private (draw-controls dc)
       (for ([control-point controls])
-        (apply draw-circle dc (point->pair control-point))))
+        (match (point->pair control-point)
+          [(list x y) (draw-circle dc x y control-radius)])))
     
-    (define (draw-text dc)
-      (send dc set-text-foreground "blue")
-      (send dc set-font font)
+    (define/private (draw-text dc)
+      (send* dc 
+        (set-text-foreground "blue")
+        (set-font font))
       (draw-curved-text (make-curved-text controls text) dc))
     
     
@@ -85,7 +90,8 @@
                                            (set! prev-mouse-pos mouse-pos)
                                            (move-active-control mouse-pos) 
                                            (send this refresh-now))]
-          [down (let ([control (which-control-clicked? mouse-pos)])
+          [down (let 
+                    ([control (which-control-clicked mouse-pos)])
                   (when control 
                     (set! active-control control)
                     (set! prev-mouse-pos mouse-pos)))]
@@ -102,9 +108,8 @@
 
 
 (module+ main
-  (define frame (new frame% [label "Curved text example"] 
-                            [height 600] 
-                            [width 1000]))
-  (new curved-text-editor% [word "10Clouds"]
-                           [parent frame])
+  (define frame  (new frame% [label "Curved text example"] 
+                             [height 600] [width 1000]))
+  (define canvas (new curved-text-editor% [text "10Clouds"]
+                                          [parent frame]))
   (send frame show #t))

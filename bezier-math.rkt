@@ -63,23 +63,11 @@
 ;; directly. They delegated to `apply` at first but "unrolling"
 ;; arguments manually proved to be much more performant.
 ;;
-(define (apply/bez2 t pts) 
-  (bezier2 t (list-ref pts 0)
-             (list-ref pts 1)
-             (list-ref pts 2)))
 
 (define-syntax-rule (apply/bez t pts)
-  (bezier3 t (list-ref pts 0)
-             (list-ref pts 1)
-             (list-ref pts 2)
-             (list-ref pts 3)))
-
-
-(define (apply/deriv2 t pts) 
-  (apply deriv2 t pts))
+  (match pts
+    [(list a b c d) (bezier3 t a b c d)]))
 
 (define-syntax-rule (apply/deriv t pts) 
-  (deriv3 t (list-ref pts 0)
-            (list-ref pts 1)
-            (list-ref pts 2)
-            (list-ref pts 3)))
+  (match pts
+    [(list a b c d) (deriv3 t a b c d)]))
