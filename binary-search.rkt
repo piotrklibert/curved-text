@@ -1,9 +1,15 @@
 #lang racket
 (require srfi/26)
 
-(provide binarysearch)
+(provide 
+ (contract-out 
+  [binarysearch (-> (vectorof number?) number? (list/c boolean? number?))]))
 
 (define (binarysearch vector value)
+  ;; performs binary search and returns a list with boolean indicating
+  ;; if the value was found as it's first element. Second element is 
+  ;; either an index of found value or an index at which the value should
+  ;; be inserted.
   (let 
       ([get-pos (cut vector-ref vector <>)])
     (let helper ([low 0]
@@ -17,7 +23,16 @@
               [(< (get-pos middle) value) (helper (+ middle 1) high)]
               [else (list #t middle)]))))))
 
-(define (test)
+(module+ test
+  (require rackunit)
   (define test-vec (list->vector (range 12 45 3)))
-  (displayln (binarysearch test-vec 34))
-  (displayln (binarysearch test-vec 33)))
+  
+  (match-let 
+      ([(list found? pos) (binarysearch test-vec 34)])
+    (test-equal? "was found?" found? #f)
+    (test-equal? "insert at?" pos 7))
+  
+  (match-let 
+      ([(list found? pos) (binarysearch test-vec 42)])
+    (test-equal? "was found?" found? #t)
+    (test-equal? "value index?" pos 10)))

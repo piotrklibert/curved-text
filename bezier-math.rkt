@@ -1,6 +1,7 @@
 #lang racket
 
 ;; TODO: write contracts and sourcedocs
+;; TODO: define-inline?
 (provide apply/bez
          apply/deriv
          pow
@@ -17,15 +18,11 @@
 
 ;; Quadratic Bezier curve equation
 (define (bezier2 t a b c)
-  ;; I have no idea if this `let` helps or hurts performance.
-  ;; I have no idea why I wrote this like that either.
   (let* 
-      ([one-minus-t (inv t)]
-       [one-minus-t-squared (pow one-minus-t)]
-       [t-squared (pow t)])
-    (+ (* one-minus-t-squared a)
+      ([one-minus-t (inv t)])
+    (+ (* (pow one-minus-t) a)
        (* one-minus-t t b 2)
-       (* t-squared c))))
+       (* (pow t) c))))
 
 ;; Cubic Bezier curve equation
 (define (bezier3 t a b c d)
@@ -71,3 +68,23 @@
 (define-syntax-rule (apply/deriv t pts) 
   (match pts
     [(list a b c d) (deriv3 t a b c d)]))
+
+(module+ test
+  (require rackunit)
+
+  (time (for ([_ (in-range 10000000)])
+        (bezier3 0.2345 20.0 30.0 40.0 120.0)))
+  
+  (test-case 
+   "Test basic mathematical operations"
+   (check-equal? (pow 45)   2025)
+   (check-equal? (inv 0.45) 0.55)
+   ;; '(3 4 5) being pythagorean triple
+   (check-equal? (distance 0 0 3 4) 5))
+  
+  (test-case 
+   "Quadratic bezier tests"
+   ;; if curve's control points form a line then
+   ;; the curve is a line too
+   (check-equal? (bezier2 0.25 0 5 10) 2.5)))
+

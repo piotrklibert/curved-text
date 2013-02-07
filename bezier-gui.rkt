@@ -1,11 +1,17 @@
 #lang racket/gui
 
-;; TODO: provide real contracts!
+(require 
+ (only-in "bezier-point.rkt" coords?))
+
+
 (provide 
- (contract-out [show-plot (-> (is-a?/c bitmap%) 
-                              (values (is-a?/c frame%) 
-                                      (is-a?/c canvas%)))])
- make-empty-bitmap get-dc draw-circle draw-path)
+ (contract-out 
+  [show-plot (-> (is-a?/c bitmap%) void?)]
+  [make-empty-bitmap (->* () (number? number?) (is-a?/c bitmap%))]
+  [get-dc (-> (is-a?/c bitmap%) (is-a?/c dc<%>))]
+  [draw-circle (->* ((is-a?/c dc<%>) number? number?) (number?) void?)]
+  [draw-path (-> (is-a?/c dc<%>) coords? void?)]
+  ))
 
 
 ;;
@@ -46,8 +52,7 @@
        [frame (new frame% [label "Example"] [width w] [height h])]
        [paint (λ (canvas% dc%) (send dc% draw-bitmap bmp% 0 0))]
        [mycanvas (new canvas% [parent frame] [paint-callback paint])])
-    (send frame show #t)
-    (values frame mycanvas)))
+    (send frame show #t)))
 
 #|
 ;; this shouldn't in theory but it slows down startup time
