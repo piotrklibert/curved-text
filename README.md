@@ -1,4 +1,3 @@
-
 This is a Racket library that allows one to draw a text along the curve plus one
 simple GUI app that serves as a demonstration.
 
@@ -13,31 +12,7 @@ more about Racket, to explore the tools it gives me as a programmer. I did my
 best and I spent quite a lot of time on several rewrites of the code, because I
 wanted to make it as idiomatic as I possibly could.
 
-To date I learned a lot of languages, frameworks and environments;
-some of them I even know quite well. But it wasn't until Lisp, in my case
-Racket, when I fell in love with a language. I was trying bits and pieces of
-Racket for the past year or so and everytime I wrote something in it I was more
-amazed with how good it feels.
-
-It took me quite some time to become confident enough to try and do something,
-more or less, real in Racket. This small library is the result of this effort.
-
-The problem with knowing many languages is twofold: first, with whichever tool
-you're working at the moment you and up comparing it against multiple others you
-know. Almost every time you write something you are forced to write it in a
-language that is not the best tool for the job, and the saddest thing is that
-you know this for sure because you know which other tools is the best because
-you used it for this exact task at home and it was so much better.
-Second, you are constantly forcing idioms and constructs you know from elsewhere
-into languages they were not created for.
-
-It's a tough spot to be in. My own way of dealing with this was to redefine the
-meaning of "knowing" - it's much too trivial to be able to use new language, I
-aim for using it's capabilities to their fullest, for knowing every single thing
-that happens when my code runs and for writing the code that is clean from other
-languages idioms while still being idiomatic in the one I use right now.
-
-Getting back to Racket, over the past year I was learning about it's features
+Over the past year I was learning about it's features
 and now I decided to learn-by-doing about how these features fit together. I was
 a bit afraid that all these nifty features would feel awkward when actually used.
 
