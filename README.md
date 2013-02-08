@@ -4,7 +4,7 @@ simple GUI app that serves as a demonstration.
 
 A picture may tell you more about what does it really do, so here it is:
 
-<img here>
+![](https://github.com/piotrklibert/bezier/raw/master/priv/screenshot.png)
 
 History
 
