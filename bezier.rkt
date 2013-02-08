@@ -104,8 +104,7 @@
     ;; Public methods
     ;;
 
-    ;; Rotate controls by an angle given as a complex number. 
-    ;; complex? -> void?
+    ;; Rotate controls by an angle given as a number of degrees. 
     (define/public (rotate-controls! angle)
       (define a (point->complex (get-control 0)))
       (define b (point->complex (get-control 3)))
