@@ -135,7 +135,6 @@
       
       (when (not (equal? key-code 'release))
         ;; on keydown but not on keyup
-        (displayln key-code)
         (cond 
           [(member key-code '(left right))   (rotate-controls! key-code)]
           [(member key-code '(add subtract #\+ #\-)) (scale-controls! key-code)])))
