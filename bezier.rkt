@@ -121,7 +121,7 @@
       (send this refresh))
     
     (define/public (scale-controls! direction)
-      (define scale (if (equal? direction 'add) 1.2 0.8))
+      (define scale (if (or (equal? direction 'add) (equal? direction #\+)) 1.2 0.8))
       (define transform (cut scale-point <> scale (get-center)))
       
       (set! controls (vector-map transform controls))
@@ -135,9 +135,10 @@
       
       (when (not (equal? key-code 'release))
         ;; on keydown but not on keyup
+        (displayln key-code)
         (cond 
           [(member key-code '(left right))   (rotate-controls! key-code)]
-          [(member key-code '(add subtract)) (scale-controls! key-code)])))
+          [(member key-code '(add subtract #\+ #\-)) (scale-controls! key-code)])))
     
     ;; MOUSE events
     (define/override (on-event event)
