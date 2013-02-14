@@ -5,16 +5,23 @@ A picture may tell you more about what does it really do, so here it is:
 
 ![](https://github.com/piotrklibert/bezier/raw/master/priv/screenshot.png)
 
-History
+
+This is a module dependency graph - I thought that I include it for anyone
+who'd like to read through the code to provide a hint where to start reading:
+
+![](https://github.com/piotrklibert/bezier/raw/master/priv/modules.png)
+
+Development history
+===================
 
 It probably is not very useful, not even to me, but I wrote this code to learn
 more about Racket, to explore the tools it gives me as a programmer. I did my
 best and I spent quite a lot of time on several rewrites of the code, because I
 wanted to make it as idiomatic as I possibly could.
 
-Over the past year I was learning about it's features
-and now I decided to learn-by-doing about how these features fit together. I was
-a bit afraid that all these nifty features would feel awkward when actually used.
+Over the past year I was learning about it's features and now I decided to
+learn-by-doing about how these features fit together. I was a bit afraid that
+all these nifty features would feel awkward when actually used.
 
 Let me tell you: they were not awkward at all, every single feature I used was
 very comfortable, clean and elegant. I still only used maybe a third of what Racket
@@ -24,6 +31,9 @@ mid-sized project easily. For even bigger things there are tools like units and
 collections; for more advanced things there are tools like macros and for
 performance critical things there are tools like Typed Racket and futures. So I
 think that Racket has potential to become a very successful langueage.
+
+Evaluation of Racket usefulness
+===============================
 
 Ok, now to the details. Features I used with a bit of explanation on why I used
 them and how it felt, i no particular order:
