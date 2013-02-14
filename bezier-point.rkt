@@ -40,6 +40,7 @@
   [rotate-point (->* (point? number?) 
                      (point? #:type (or/c 'degrees 'radians)) 
                      point?)]
+  [scale-point (->* (point? number?) (point?) point?)]
   ))
 
 
@@ -105,3 +106,10 @@
        [origin (point->complex origin)]
        [angle  (make-polar 1 (angle-converter angle))])
     (complex->point (+ origin (* angle (- point origin))))))
+
+(define (scale-point point scale [origin zero-point])
+  (let
+      ([point  (point->complex point)]
+       [origin (point->complex origin)]
+       [scale  (make-polar scale 0)])
+    (complex->point (+ origin (* scale (- point origin))))))

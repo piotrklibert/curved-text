@@ -76,7 +76,14 @@
     (define/private (real-radius)
       (+ control-radius control-margin))
 
-    
+    (define/private (get-endpoints)
+      (values (get-control 0) (get-control 3)))
+    (define/private (get-center)
+      (define-values (a b) (get-endpoints))
+      (let 
+          ([a (point->complex a)]
+           [b (point->complex b)])
+        (complex->point (+ a (/ (- b a) 2)))))
     ;; Drawing helpers.
 
     (define/private (get-own-dc) 
@@ -105,27 +112,32 @@
     ;;
 
     ;; Rotate controls by an angle given as a number of degrees. 
-    (define/public (rotate-controls! angle)
-      (define a (point->complex (get-control 0)))
-      (define b (point->complex (get-control 3)))
-
-      (let* 
-          ([center (complex->point (+ a (/ (- b a) 2)))]
-           [rotate (cut rotate-point <> angle center #:type 'degrees)])
-        (set! controls (vector-map rotate controls))
-        (send this refresh)))
-
+    (define/public (rotate-controls! direction [angle 5])
+      (define center (get-center))
+      (define degrees (if (equal? direction 'left) (- angle) angle))
+      (define transform (cut rotate-point <> degrees center #:type 'degrees))
+      
+      (set! controls (vector-map transform controls))
+      (send this refresh))
+    
+    (define/public (scale-controls! direction)
+      (define scale (if (equal? direction 'add) 1.2 0.8))
+      (define transform (cut scale-point <> scale (get-center)))
+      
+      (set! controls (vector-map transform controls))
+      (send this refresh))
 
     ;; GUI callbacks.
     
     ;; KEYBOARD events
     (define/override (on-char event)
       (define key-code (send event get-key-code))
-      (define angle (if (equal? key-code 'left) (- 5) 5)) 
-
+      
       (when (not (equal? key-code 'release))
         ;; on keydown but not on keyup
-        (rotate-controls! angle)))
+        (cond 
+          [(member key-code '(left right))   (rotate-controls! key-code)]
+          [(member key-code '(add subtract)) (scale-controls! key-code)])))
     
     ;; MOUSE events
     (define/override (on-event event)
