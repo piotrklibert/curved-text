@@ -48,14 +48,15 @@
     (show-plot bmp)))
 
 (define (test-perf [n 200])
-  (displayln (string-append "Creating " (number->string n) " curved text "
-                            "instances took:"))
-  (time (for ([x (in-range 200)])
-          (make-curved-text test-control-points 
-                            "performance-test-word"))))
+  (displayln 
+   (string-append "Creating " (number->string n) " curved text "
+                  "instances took:"))
+  (time 
+   (for ([x (in-range 200)])
+     (make-curved-text test-control-points "performance-test-word"))))
 
 
 (module+ main
   ;; for quick invoking from command line
-  (test-perf)
+  (test-perf) ; around 500ms!!! Nice!
   #;(test "10Clouds" '((10 90) (100 15) (300 470) (340 40))))

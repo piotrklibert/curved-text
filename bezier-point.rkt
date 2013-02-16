@@ -5,6 +5,10 @@
 ;; for converting from and to a point struct.
 ;; 
 
+(require 
+ racket/performance-hint
+ (only-in "bezier-math.rkt" distance))
+
 
 (struct point
   (x y) 
@@ -12,18 +16,25 @@
 
 
 ;; constants
-(define zero-point (point 0 0))
+(define zero-point (point 0.0 0.0))
 
 
+;; contracts
 (define coord?  (or/c point? pair? complex? list?))
 (define coords? (or/c (vectorof coord?) (listof coord?)))
+
 
 (provide
  coord?
  coords?
+ 
+ ;; not contracted because of contracts performance overhead
+ points-distance ; (-> point? point? number?)
+ 
  (contract-out 
-  [struct point ((x number?)
-                 (y number?))]
+  [struct point ((x flonum?)
+                 (y flonum?))]
+  [make-point (-> real? real? point?)]
   
   [list->point (-> (list/c number? number?) point?)]
   [point->list (-> point? (list/c number? number?))]
@@ -36,7 +47,6 @@
   
   [coords->points (-> coords? (listof point?))]
   
-  [points-distance (-> point? point? number?)]
   [rotate-point (->* (point? number?) 
                      (point? #:type (or/c 'degrees 'radians)) 
                      point?)]
@@ -44,18 +54,22 @@
   ))
 
 
-(require 
- ;; we need this because we want to provide a version of 
- ;; distance procedure that operates on points
- (only-in "bezier-math.rkt" distance))
+;;================================================================================
+
+;; Point constructor
+
+(define (make-point x y)
+  (point (real->double-flonum x)
+         (real->double-flonum y)))
 
 
-;;
+;;================================================================================
+
 ;; Converting to and from popular representations of a point.
-;;
+
 (define (list->point lst)
-  (point (first lst)
-         (second lst)))
+  (make-point (first lst)
+              (second lst)))
 
 (define (point->list point)
   (list (point-x point) 
@@ -63,8 +77,8 @@
 
 
 (define (pair->point pair)
-  (point (car pair)
-         (cdr pair)))
+  (make-point (car pair)
+              (cdr pair)))
 
 (define (point->pair points)
   (cons (point-x point) 
@@ -76,8 +90,9 @@
                     (point-y p)))
 
 (define (complex->point c)
-  (point (real-part c) 
-         (imag-part c)))
+  (make-point (real-part c) 
+              (imag-part c)))
+
 
 ;; A convenience wrapper that dispatches to one of the above functions
 ;; depending on the type of it's argument.
@@ -91,25 +106,53 @@
       [(complex? coords) (complex->point coords)])))
 
 
-;;
+;;================================================================================
+
 ;; Additional utility functions.
-;;
-(define (points-distance p1 p2)
-  (distance (point-x p1) (point-y p1)
-            (point-x p2) (point-y p2)))
+
+(begin-encourage-inline
+  
+  (define (points-distance p1 p2)
+    (distance (point-x p1) 
+              (point-y p1)
+              (point-x p2) 
+              (point-y p2)))
+  )
 
 
-(define (rotate-point point angle [origin zero-point] #:type [angle-type 'radians])
-  (define angle-converter (if (equal? angle-type 'radians) values degrees->radians))
+;; TODO: abstract over these two functions (somehow)
+(define (rotate-point point angle 
+                      [origin zero-point] 
+                      #:type [angle-type 'radians])
+  (define angle-converter (if (equal? angle-type 'radians) 
+                              values ; acts as identity function
+                              degrees->radians))
+  
   (let
       ([point  (point->complex point)]
        [origin (point->complex origin)]
        [angle  (make-polar 1 (angle-converter angle))])
     (complex->point (+ origin (* angle (- point origin))))))
 
+
 (define (scale-point point scale [origin zero-point])
   (let
       ([point  (point->complex point)]
        [origin (point->complex origin)]
        [scale  (make-polar scale 0)])
+    
     (complex->point (+ origin (* scale (- point origin))))))
+
+
+;;================================================================================
+
+(module+ test
+  (require rackunit)
+  
+  (test-case 
+   "Test distance between points computation."
+   ;; '(3 4 5) being pythagorean triple
+   (check-equal? (points-distance (make-point 0 0) 
+                                  (make-point 3 4)) 
+                 5.0))
+  )

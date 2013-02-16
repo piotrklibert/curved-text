@@ -14,6 +14,9 @@
  ;; output-port
  timeit)
 
+
+;;================================================================================
+
 (define-syntax repeat
   (syntax-rules ()
     [(repeat n body ...) (for 
@@ -40,11 +43,13 @@
                                                   (λ () body ...)))))
 
 
+;;================================================================================
+
 (module+ test
   (require rackunit)
   
   (test-case
-   "Check if repeat really reapeats it's body given number of times"
+   "Check if repeat really repeats it's body given number of times"
    (let ([acc 0])
      (repeat 5
        (set! acc (add1 acc)))

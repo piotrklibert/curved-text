@@ -15,6 +15,8 @@
  "binary-search.rkt")
 
 
+;;================================================================================
+
 (struct point-and-angle point
   (angle)
   #:transparent)
@@ -26,12 +28,14 @@
   (controls points cumlens ts len))
 
 
+;;================================================================================
+
 (provide
  (struct-out point-and-angle)
  (contract-out
   [struct control-points ((points (vectorof point?))
-                          (xs (vectorof flonum?))
-                          (ys (vectorof flonum?)))]
+                          (xs     (vectorof flonum?))
+                          (ys     (vectorof flonum?)))]
   [make-control-points (-> (listof point?) control-points?)]
   
   [struct curve ((controls control-points?)
@@ -45,20 +49,13 @@
   ))
 
 
+;;================================================================================
 
-(define (make-control-points points)
-  (let ([points (list->vector points)])
-    (control-points points
-                    (vector-map (compose real->double-flonum point-x) points)
-                    (vector-map (compose real->double-flonum point-y) points))))
+;; Math wrappers
 
-
-;;
-;; Math wrappers.
-;;
 (define (point-at controls-x controls-y t)
-  (point (apply/bez t controls-x)
-         (apply/bez t controls-y)))
+  (make-point (apply/bez t controls-x)
+              (apply/bez t controls-y)))
 
 (define (angle-at controls-x controls-y t)
   (let ([x (apply/deriv t controls-x)]
@@ -68,9 +65,30 @@
     (atan (- y) x)))
 
 
-;;
+;;================================================================================
+
+(define (make-control-points points)
+  (let ([points (list->vector points)])
+    (control-points points
+                    (vector-map (compose real->double-flonum point-x) points)
+                    (vector-map (compose real->double-flonum point-y) points))))
+
+
+(define (make-curve controls resolution)
+  (let* 
+      ([ts       (make-ts resolution)]
+       [controls (make-control-points (coords->points controls))]
+       [points   (make-points controls ts)]
+       [lengths  (make-lengths points)]
+       [length   (vector-ref lengths (sub1 (vector-length lengths)))])
+    
+    (curve controls points lengths ts length)))
+
+
+;;================================================================================
+
 ;; Curve creation helpers
-;;
+
 (define (make-ts n)
   ;; returns a vector of numbers in 0..1 range (inclusive)
   (let* 
@@ -78,51 +96,70 @@
        [n (if (> n 1) (/ 1.0 n) n)])
     (list->vector (range 0.0 (+ 1 n) n))))
 
+
 (define (make-points controls ts)
-  (vector-map (cut point-at (control-points-xs controls) 
-                            (control-points-ys controls) <>) ts))
+  ;; returns a vector of points that lie on a curve
+  ;; described with given control points
+  (define xs (control-points-xs controls))
+  (define ys (control-points-ys controls))
+  
+  (vector-map (cut point-at xs ys <>) ts))
+
 
 (define (make-lengths points)
-  ;; TODO: we can do this in even more imperative way (for/vector ...)
-  (for/fold 
+  ;; returns a vector of cumulative sums of curve lengths
+  (define sum (box 0))
+  (define cumsums (for/vector
+                      ([i (in-range 1 (vector-length points))])
+                    (let
+                        ([current-dist (+ (unbox sum)
+                                          (dist-helper points i))])
+                      (set-box! sum current-dist)
+                      current-dist)))
+  ;; insert the first distance so that resulting vector 
+  ;; length is equal to length of points vector
+  (vector-append #(0) cumsums))
+
+(define (dist-helper vec i)
+  ;; get distance between i-th point and the previous one
+  (points-distance (vector-ref vec (sub1 i)) 
+                   (vector-ref vec i)))
+
+
+;;================================================================================
+
+;; Other curve methods
+
+(define (get-nearest-point curve dist)
+  ;; returns a point on a curve which distance from the start is
+  ;; equal (or near) dist
+  (define get-angle (cut angle-at (control-points-xs (curve-controls curve))
+                                  (control-points-ys (curve-controls curve)) <>))
+  (let* 
+      ([points     (curve-points curve)]
+       [lens       (curve-cumlens curve)]
+       [ts         (curve-ts curve)]
+       [search-res (binarysearch lens dist)] 
+       [pos        (if (first search-res) 
+                       (second search-res)
+                       ;; it is possible for binary-search to return -1
+                       (if (> (second search-res) 0)
+                           (sub1 (second search-res))
+                           0))]
+       [point      (vector-ref points pos)])
+    
+      (point-and-angle (point-x point) (point-y point)
+                       (get-angle (vector-ref ts pos)))))
+
+
+#|
+make-lengths, previous version:
+(for/fold 
       ([sums (list 0)])
       ([i (in-range 1 (vector-length points))])
 
     (cons (+ (car sums)
              (points-distance (vector-ref points (sub1 i)) 
                               (vector-ref points i))) 
-          sums)))
-
-;;
-;; Actual curve constructor
-;;
-(define (make-curve controls resolution)
-  (let* 
-      ([ts       (make-ts resolution)]
-       [controls (make-control-points (coords->points controls))]
-       [points   (make-points controls ts)]
-       [lengths  (make-lengths points)]
-       [vlens    (list->vector (reverse lengths))])
-    
-    (curve controls points vlens ts (first lengths))))
-
-
-
-;;
-;; Curve methods
-;;
-
-(define (get-nearest-point curve dist)
-  (let 
-      ([get-angle (curry angle-at (control-points-xs (curve-controls curve))
-                                  (control-points-ys (curve-controls curve)))]
-       [points     (curve-points curve)]
-       [lens       (curve-cumlens curve)]
-       [ts         (curve-ts curve)])
-    (match-let*
-        ([(list found? pos) (binarysearch lens dist)]
-         [pos   (if found? pos (sub1 pos))]
-         [point (vector-ref points pos)])
-      (point-and-angle (point-x point)
-                       (point-y point)
-                       (get-angle (vector-ref ts pos))))))
+          sums))
+|#

@@ -42,7 +42,7 @@
     ;; this is an attempt to reduce the number of redraws, but
     ;; I don't think it helped much 
     ;; TODO: profile and probably throw this away or maybe refactor
-    (define prev-mouse-pos     (point 0 0))
+    (define prev-mouse-pos     (make-point 0 0))
     (define min-animation-dist 3)
     (define (worth-animating? cur-pos)
       (> (points-distance prev-mouse-pos cur-pos) 
@@ -84,6 +84,8 @@
           ([a (point->complex a)]
            [b (point->complex b)])
         (complex->point (+ a (/ (- b a) 2)))))
+    
+    
     ;; Drawing helpers.
 
     (define/private (get-own-dc) 
@@ -143,7 +145,7 @@
     (define/override (on-event event)
       (let* 
           (;; click position
-           [mouse-pos (point (send event get-x) 
+           [mouse-pos (make-point (send event get-x) 
                              (send event get-y))]
            ;; click event properties
            [down      (send event button-down?)]
