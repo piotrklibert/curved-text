@@ -58,4 +58,4 @@
 (module+ main
   ;; for quick invoking from command line
   (test-perf)
-  (test "10Clouds" '((10 90) (100 15) (300 470) (340 40))))
+  #;(test "10Clouds" '((10 90) (100 15) (300 470) (340 40))))

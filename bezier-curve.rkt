@@ -30,8 +30,8 @@
  (struct-out point-and-angle)
  (contract-out
   [struct control-points ((points (vectorof point?))
-                          (xs (listof number?))
-                          (ys (listof number?)))]
+                          (xs (vectorof flonum?))
+                          (ys (vectorof flonum?)))]
   [make-control-points (-> (listof point?) control-points?)]
   
   [struct curve ((controls control-points?)
@@ -47,9 +47,10 @@
 
 
 (define (make-control-points points)
-  (control-points (list->vector points)
-                  (map point-x points)
-                  (map point-y points)))
+  (let ([points (list->vector points)])
+    (control-points points
+                    (vector-map (compose real->double-flonum point-x) points)
+                    (vector-map (compose real->double-flonum point-y) points))))
 
 
 ;;
