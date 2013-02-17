@@ -3,15 +3,16 @@
 ;;
 ;; A simple GUI app that uses curved-text structures;
 ;; it displays a text along the curve and lets the user
-;; reshape and rotate the curve.
+;; reshape (click and drag) and rotate the curve (left
+;; and right arrows).
 ;;
 
 (require
  srfi/26
  (only-in racket/draw font%)
- "bezier-point.rkt"
- "bezier-text.rkt"
- "bezier-gui.rkt")
+ "point.rkt"
+ "curved-text.rkt"
+ "utils.rkt")
 
 (define (make-default-controls)
   (for/vector 

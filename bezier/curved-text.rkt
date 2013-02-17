@@ -1,8 +1,8 @@
 #lang racket
 
 (require
- "bezier-point.rkt"
- "bezier-curve.rkt"
+ "point.rkt"
+ "curve.rkt"
  (only-in racket/draw dc<%>))
 
 
@@ -31,8 +31,7 @@
   
   [make-curved-text (->* (coords? string?) (number?) curved-text?)]
   
-  [draw-curved-text (-> curved-text? (is-a?/c dc<%>) void?)]
-  ))
+  [draw-curved-text (-> curved-text? (is-a?/c dc<%>) void?)]))
 
 
 ;;================================================================================

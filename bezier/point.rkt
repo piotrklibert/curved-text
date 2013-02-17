@@ -7,7 +7,7 @@
 
 (require 
  racket/performance-hint
- (only-in "bezier-math.rkt" distance))
+ (only-in "math.rkt" distance))
 
 
 (struct point
@@ -50,8 +50,7 @@
   [rotate-point (->* (point? number?) 
                      (point? #:type (or/c 'degrees 'radians)) 
                      point?)]
-  [scale-point (->* (point? number?) (point?) point?)]
-  ))
+  [scale-point (->* (point? number?) (point?) point?)]))
 
 
 ;;================================================================================

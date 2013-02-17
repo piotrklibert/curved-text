@@ -10,8 +10,8 @@
 
 (require
  srfi/26
- "bezier-point.rkt"
- "bezier-math.rkt"
+ "point.rkt"
+ "math.rkt"
  "binary-search.rkt")
 
 
@@ -91,6 +91,8 @@
 
 (define (make-ts n)
   ;; returns a vector of numbers in 0..1 range (inclusive)
+  ;; n can be either < 1 and then specifies a step or > 1
+  ;; and then spcifies how many numbers to generate
   (let* 
       ([n (if (exact? n) (exact->inexact n) n)]
        [n (if (> n 1) (/ 1.0 n) n)])

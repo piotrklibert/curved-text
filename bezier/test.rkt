@@ -13,9 +13,9 @@
   racket/draw)
 
 (require 
-  "bezier-point.rkt"
-  "bezier-text.rkt"
-  "bezier-gui.rkt")
+ "point.rkt"
+ "curved-text.rkt"
+ "utils.rkt")
 
 (provide 
   (contract-out 
