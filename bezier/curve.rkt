@@ -45,7 +45,7 @@
                  (len      number?))]
   
   [make-curve (-> coords? number? curve?)]
-  [get-nearest-point (-> curve? number? point-and-angle?)]
+  [get-point-at-dist (-> curve? number? point-and-angle?)]
   ))
 
 
@@ -132,36 +132,19 @@
 
 ;; Other curve methods
 
-(define (get-nearest-point curve dist)
+(define (get-point-at-dist curve dist)
   ;; returns a point on a curve which distance from the start is
   ;; equal (or near) dist
   (define get-angle (cut angle-at (control-points-xs (curve-controls curve))
                                   (control-points-ys (curve-controls curve)) <>))
-  (let* 
-      ([points     (curve-points curve)]
-       [lens       (curve-cumlens curve)]
-       [ts         (curve-ts curve)]
-       [search-res (binarysearch lens dist)] 
-       [pos        (if (first search-res) 
-                       (second search-res)
-                       ;; it is possible for binary-search to return -1
-                       (if (> (second search-res) 0)
-                           (sub1 (second search-res))
-                           0))]
-       [point      (vector-ref points pos)])
-    
-      (point-and-angle (point-x point) (point-y point)
-                       (get-angle (vector-ref ts pos)))))
-
-
-#|
-make-lengths, previous version:
-(for/fold 
-      ([sums (list 0)])
-      ([i (in-range 1 (vector-length points))])
-
-    (cons (+ (car sums)
-             (points-distance (vector-ref points (sub1 i)) 
-                              (vector-ref points i))) 
-          sums))
-|#
+  (define search-res (binarysearch (curve-cumlens curve) dist))
+  ;; binary search can return -1 as position, we need to adjust the
+  ;; value if it happens
+  (define pos (if (and (car search-res)
+                       (< (second search-res) 0))
+                  0
+                  (second search-res)))
+  (point-and-angle
+   (point-x (vector-ref (curve-points curve) pos)) 
+   (point-y (vector-ref (curve-points curve) pos))
+   (get-angle (vector-ref (curve-ts curve) pos))))

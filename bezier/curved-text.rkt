@@ -64,9 +64,8 @@
   (define curve-length (curve-len curve))
   (define spacing      (/ curve-length word-length))
   
-  (for/vector 
-      ([char-num (in-range word-length)])
-    (get-nearest-point curve (* spacing char-num))))
+  (for/vector ([char-num (in-range word-length)])
+    (get-point-at-dist curve (* spacing char-num))))
 
 
 ;;================================================================================
