@@ -148,3 +148,62 @@
    (point-x (vector-ref (curve-points curve) pos)) 
    (point-y (vector-ref (curve-points curve) pos))
    (get-angle (vector-ref (curve-ts curve) pos))))
+
+
+;;
+;; compute-length below is a translation of a "Gauss quadrature"
+;; method of computing the length of a curve without the need to
+;; "flatten" (chop into lots of small lines) it. I saw it first
+;; described and implemented in Processing here: http://processingjs.nihongoresources.com/bezierinfo/#intoffsets_gss
+;; (with the source here: http://processingjs.nihongoresources.com/bezierinfo/sketchsource.php?sketch=cubicGaussQuadrature)
+;; and decided to implement it, even though I still need to flatten
+;; the curve to make "arc-length parameterization".
+;;
+;; This algorithm relies on a table of precomputed values, 
+;; which I copied to tables.rkt and exported from there.
+;;
+;; This is not done yet - it needs to be optimized!
+;;
+
+(require "tables.rkt")
+
+(define (compute-length z n x1 y1 x2 y2 x3 y3 x4 y4)
+  (define z2 (/ z 2.0))
+  (* z2 (for/fold 
+            ([sum 0])
+            ([i (in-range n)]
+             [tval (vector-ref tvals n)]
+             [cval (vector-ref cvals n)])
+          (define corrected_t (+ (* z2 tval) z2))
+          (+ sum (* cval (cubicF corrected_t x1 y1 x2 y2 x3 y3 x4 y4))))))
+
+(define (cubicF t x1 y1 x2 y2 x3 y3 x4 y4)
+  (define xbase (base3 t x1 x2 x3 x4))
+  (define ybase (base3 t y1 y2 y3 y4))
+  (sqrt (+ (* xbase xbase)
+           (* ybase ybase))))
+
+(define (base3 t p1 p2 p3 p4)
+  (define t1 (+ (* -3 p1) 
+                (*  9 p2) 
+                (- (* 9 p3)) 
+                (* 3 p4)))
+  (define t2 (+ (* t t1)
+                (* 6 p1)
+                (- (* 12 p2))
+                (* 6 p3)))
+  (+ (* t t2)
+     (- (* 3 p1))
+     (* 3 p2)))
+
+(module+ test
+  (require rackunit)
+  
+  (define-syntax-rule (flat-points curve)
+    (let 
+        ([pts (vector->list (control-points-points (curve-controls curve)))])
+      (flatten (map point->list pts))))
+  
+  (define curve (make-curve '((40 40) (5 200) (400 5) (550 350)) 200))
+  
+  (check-= (apply compute-length 1.0 10 (flat-points curve)) (curve-len curve) 0.01))
