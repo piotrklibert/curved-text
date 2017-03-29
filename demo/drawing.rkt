@@ -8,30 +8,30 @@
 ;;
 
 
-(require 
-  srfi/26 
+(require
+  srfi/26
   racket/draw)
 
-(require 
- "point.rkt"
- "curved-text.rkt"
- "utils.rkt")
+(require
+ curved-text/bezier/point
+ curved-text/bezier/curved-text
+ curved-text/bezier/utils)
 
-(provide 
-  (contract-out 
+(provide
+  (contract-out
     [test (->* () (string? coords?) void?)]
     [test-perf (-> number? void?)]))
 
 (define test-control-points '((40 40) (5 200) (400 5) (550 350)))
 
-(define (test [word "Hello world!"] 
+(define (test [word "Hello world!"]
               [control-points test-control-points])
-  (let* 
+  (let*
       ([bmp   (make-empty-bitmap)]
        [dc    (get-dc bmp)]
        [path  (new dc-path%)]
        [font  (make-font #:size 24 #:family 'roman #:weight 'bold)]
-       [curved-text (time (make-curved-text control-points word))]) 
+       [curved-text (time (make-curved-text control-points word))])
     (send dc set-smoothing 'smoothed)
 
     ;; draw curve
@@ -47,16 +47,15 @@
     ;; display
     (show-plot bmp)))
 
+
 (define (test-perf [n 200])
-  (displayln 
+  (displayln
    (string-append "Creating " (number->string n) " curved text "
                   "instances took:"))
-  (time 
-   (for ([x (in-range 200)])
+  (time
+   (for ([x (in-range n)])
      (make-curved-text test-control-points "performance-test-word"))))
 
 
 (module+ main
-  ;; for quick invoking from command line
-  (test-perf) ; around 500ms!!! Nice!
-  #;(test "10Clouds" '((10 90) (100 15) (300 470) (340 40))))
+  (test "Sample text to curve!" '((102 316) (152 16) (610 27) (696 242))))
