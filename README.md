@@ -1,10 +1,11 @@
-# curved-text - simple library for drawing things along the curve
+# curved-text - library for drawing things along curves
 
 ## What?
 
 A simple library for drawing text (but it can be used for drawing other things
-too) along the cubic Bezier curves. It's probably easier to show than describe,
-so here's a screenshot of DrRacket REPL showing the library in action:
+too) along the cubic (and quadratic) Bezier curves. It's probably easier to show
+than describe, so here's a screenshot of DrRacket REPL showing the library in
+action:
 
 ![](https://github.com/piotrklibert/bezier/raw/master/priv/demo-inline-screenshot.png)
 
@@ -72,6 +73,7 @@ with it is a great pleasure :)
 
 A lot of things, but the most important are these:
 
+* expose quadratic (and possibly above-cubic too) curves functions
 * rewrite math parts in Typed Racket
 * make fonts customizable
 * allow for drawing arbitrary shapes along the curve
