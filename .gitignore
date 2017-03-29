@@ -1,3 +1,6 @@
-.bzr
-.bzrignore
-bezier/compiled/
+*~
+\#*
+.\#*
+.DS_Store
+compiled/
+/doc/
