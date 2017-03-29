@@ -1,26 +1,29 @@
 #lang racket
 
-(provide 
+(provide
  cvals
  tvals)
 
 (define-syntax (maybe-drop-quote stx)
   (syntax-case stx (unquote)
-    [(_ (unquote (a c  ...))) #'(list (maybe-drop-quote a) 
+    [(_ (unquote (a c  ...))) #'(list (maybe-drop-quote a)
                                       (maybe-drop-quote c) ...)]
     [(_ (unquote a)) #'a]
-    [(_ (a b ...)) #'(list (maybe-drop-quote a) 
+    [(_ (a b ...)) #'(list (maybe-drop-quote a)
                            (maybe-drop-quote b) ...)]
-    [(_ a b c ...) #'(list (maybe-drop-quote a) 
-                           (maybe-drop-quote b) 
+    [(_ a b c ...) #'(list (maybe-drop-quote a)
+                           (maybe-drop-quote b)
                            (maybe-drop-quote c) ...)]
     [(_ a) #'a]))
 
 (define-syntax-rule (define-vals name rest ...)
-  (define name (list->vector (list* '() '() (maybe-drop-quote rest ...)))))
+  (define name
+    (list->vector
+     (list*
+      '() '()                           ; dummy entries for n = 0 and 1
+      (maybe-drop-quote rest ...)))))
 
-(define-vals tvals 
-  
+(define-vals tvals
   {-0.5773502691896257310588680411456152796745,0.5773502691896257310588680411456152796745},
   {0.0000000000000000000000000000000000000000,-0.7745966692414834042779148148838430643082,0.7745966692414834042779148148838430643082},
   {-0.3399810435848562573113440521410666406155,0.3399810435848562573113440521410666406155,-0.8611363115940525725378051902225706726313,0.8611363115940525725378051902225706726313},

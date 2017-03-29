@@ -3,22 +3,21 @@
 ;;
 ;; A structure that describes cubic (for now) Bezier curve
 ;; and some of the operations that can be performed on a curve.
-;; 
+;;
 ;; The curve provides means of retrieving points that belong to
 ;; the curve and of calculating the tangent angle at given point.
 ;;
 
 (require
  srfi/26
- "point.rkt"
- "math.rkt"
- "binary-search.rkt")
+ curved-text/bezier/point
+ curved-text/bezier/math
+ curved-text/bezier/binary-search)
 
 
 ;;================================================================================
 
-(struct point-and-angle point
-  (angle)
+(struct point-and-angle point (angle)
   #:transparent)
 
 (struct control-points
@@ -37,15 +36,16 @@
                           (xs     (vectorof flonum?))
                           (ys     (vectorof flonum?)))]
   [make-control-points (-> (listof point?) control-points?)]
-  
+
   [struct curve ((controls control-points?)
                  (points   (vectorof point?))
                  (cumlens  (vectorof number?))
                  (ts       (vectorof number?))
                  (len      number?))]
-  
+
   [make-curve (-> coords? number? curve?)]
   [get-point-at-dist (-> curve? number? point-and-angle?)]
+  [compute-length (->* (curve?) (number?) number?)]
   ))
 
 
@@ -60,7 +60,7 @@
 (define (angle-at controls-x controls-y t)
   (let ([x (apply/deriv t controls-x)]
         [y (apply/deriv t controls-y)])
-    ;; x/y would yield a tangent angle, we need it rotated 
+    ;; x/y would yield a tangent angle, we need it rotated
     ;; by 90 degrees, hence the change of sign and order of coords
     (atan (- y) x)))
 
@@ -68,20 +68,22 @@
 ;;================================================================================
 
 (define (make-control-points points)
-  (let ([points (list->vector points)])
-    (control-points points
-                    (vector-map (compose real->double-flonum point-x) points)
-                    (vector-map (compose real->double-flonum point-y) points))))
+  (let ([points (list->vector points)]
+        [mk-getter (cut compose real->double-flonum <>)])
+    (control-points
+     points
+     (vector-map (mk-getter point-x) points)
+     (vector-map (mk-getter point-y) points))))
 
 
 (define (make-curve controls resolution)
-  (let* 
+  (let*
       ([ts       (make-ts resolution)]
        [controls (make-control-points (coords->points controls))]
        [points   (make-points controls ts)]
        [lengths  (make-lengths points)]
        [length   (vector-ref lengths (sub1 (vector-length lengths)))])
-    
+
     (curve controls points lengths ts length)))
 
 
@@ -93,7 +95,7 @@
   ;; returns a vector of numbers in 0..1 range (inclusive)
   ;; n can be either < 1 and then specifies a step or > 1
   ;; and then spcifies how many numbers to generate
-  (let* 
+  (let*
       ([n (if (exact? n) (exact->inexact n) n)]
        [n (if (> n 1) (/ 1.0 n) n)])
     (list->vector (range 0.0 (+ 1 n) n))))
@@ -104,27 +106,25 @@
   ;; described with given control points
   (define xs (control-points-xs controls))
   (define ys (control-points-ys controls))
-  
+
   (vector-map (cut point-at xs ys <>) ts))
 
 
 (define (make-lengths points)
   ;; returns a vector of cumulative sums of curve lengths
   (define sum (box 0))
-  (define cumsums (for/vector
-                      ([i (in-range 1 (vector-length points))])
-                    (let
-                        ([current-dist (+ (unbox sum)
-                                          (dist-helper points i))])
-                      (set-box! sum current-dist)
-                      current-dist)))
-  ;; insert the first distance so that resulting vector 
+  (define cumsums
+    (for/vector ([i (in-range 1 (vector-length points))])
+      (let ([current-dist (+ (unbox sum) (dist-helper points i))])
+        (set-box! sum current-dist)
+        current-dist)))
+  ;; insert the first distance so that resulting vector
   ;; length is equal to length of points vector
   (vector-append #(0) cumsums))
 
 (define (dist-helper vec i)
   ;; get distance between i-th point and the previous one
-  (points-distance (vector-ref vec (sub1 i)) 
+  (points-distance (vector-ref vec (sub1 i))
                    (vector-ref vec i)))
 
 
@@ -145,37 +145,44 @@
                   0
                   (second search-res)))
   (point-and-angle
-   (point-x (vector-ref (curve-points curve) pos)) 
+   (point-x (vector-ref (curve-points curve) pos))
    (point-y (vector-ref (curve-points curve) pos))
    (get-angle (vector-ref (curve-ts curve) pos))))
 
 
 ;;
-;; compute-length below is a translation of a "Gauss quadrature"
-;; method of computing the length of a curve without the need to
-;; "flatten" (chop into lots of small lines) it. I saw it first
-;; described and implemented in Processing here: http://processingjs.nihongoresources.com/bezierinfo/#intoffsets_gss
-;; (with the source here: http://processingjs.nihongoresources.com/bezierinfo/sketchsource.php?sketch=cubicGaussQuadrature)
-;; and decided to implement it, even though I still need to flatten
-;; the curve to make "arc-length parameterization".
+;; compute-length below is a translation of a "Gauss quadrature" method of
+;; computing the length of a curve without the need to "flatten" (chop into lots
+;; of small lines) it. I saw it first described and implemented in Processing
+;; here: http://processingjs.nihongoresources.com/bezierinfo/#intoffsets_gss
+;; (with the source here:
+;; http://processingjs.nihongoresources.com/bezierinfo/sketchsource.php?sketch=cubicGaussQuadrature)
+;; and decided to implement it, even though I still need to flatten the curve to
+;; make "arc-length parameterization".
 ;;
-;; This algorithm relies on a table of precomputed values, 
-;; which I copied to tables.rkt and exported from there.
-;;
-;; This is not done yet - it needs to be optimized!
+;; This algorithm relies on a table of precomputed values, which I copied to
+;; tables.rkt and exported from there.
 ;;
 
 (require "tables.rkt")
 
-(define (compute-length z n x1 y1 x2 y2 x3 y3 x4 y4)
+(define-syntax-rule (flat-points curve)
+  (let ([pts (vector->list
+              (control-points-points
+               (curve-controls curve)))])
+    (flatten (map point->list pts))))
+
+(define (compute-length curve [t 1.0] [n 20])
+  (apply raw-compute-length 1.0 n (flat-points curve)))
+
+(define (raw-compute-length z n x1 y1 x2 y2 x3 y3 x4 y4)
   (define z2 (/ z 2.0))
-  (* z2 (for/fold 
-            ([sum 0])
-            ([i (in-range n)]
-             [tval (vector-ref tvals n)]
-             [cval (vector-ref cvals n)])
-          (define corrected_t (+ (* z2 tval) z2))
-          (+ sum (* cval (cubicF corrected_t x1 y1 x2 y2 x3 y3 x4 y4))))))
+  (* z2
+     (for/fold ([sum 0])
+               ([tval (vector-ref tvals n)]
+                [cval (vector-ref cvals n)])
+       (define corrected_t (+ (* z2 tval) z2))
+       (+ sum (* cval (cubicF corrected_t x1 y1 x2 y2 x3 y3 x4 y4))))))
 
 (define (cubicF t x1 y1 x2 y2 x3 y3 x4 y4)
   (define xbase (base3 t x1 x2 x3 x4))
@@ -183,27 +190,23 @@
   (sqrt (+ (* xbase xbase)
            (* ybase ybase))))
 
+;; TODO: This works, but I have no idea why or how...
 (define (base3 t p1 p2 p3 p4)
-  (define t1 (+ (* -3 p1) 
-                (*  9 p2) 
-                (- (* 9 p3)) 
-                (* 3 p4)))
-  (define t2 (+ (* t t1)
-                (* 6 p1)
-                (- (* 12 p2))
-                (* 6 p3)))
-  (+ (* t t2)
-     (- (* 3 p1))
-     (* 3 p2)))
+  (define t1 (+ (* -3 p1)
+                (*  9 p2)
+                (* -9 p3)
+                (*  3 p4)))
+  (define t2 (+ (*   t t1)
+                (*   6 p1)
+                (* -12 p2)
+                (*   6 p3)))
+  (+ (*  t  t2)
+     (* -3  p1)
+     (*  3  p2)))
+
 
 (module+ test
   (require rackunit)
-  
-  (define-syntax-rule (flat-points curve)
-    (let 
-        ([pts (vector->list (control-points-points (curve-controls curve)))])
-      (flatten (map point->list pts))))
-  
   (define curve (make-curve '((40 40) (5 200) (400 5) (550 350)) 200))
-  
-  (check-= (apply compute-length 1.0 10 (flat-points curve)) (curve-len curve) 0.01))
+  (check-= (apply raw-compute-length 1.0 22 (flat-points curve))
+           (curve-len curve) 0.01))

@@ -13,3 +13,11 @@ a curved text and allows manipulating control points by dragging them with the
 mouse:
 
 ![](https://github.com/piotrklibert/bezier/raw/master/priv/demo-screenshot.png)
+
+## How?
+
+You need to have Racket installed and `raco` in your `PATH`. You can then
+install and run it with the following commands:
+
+    raco pkg install curved-text
+    racket -l curved-text
