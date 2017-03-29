@@ -14,15 +14,16 @@
  distance    ; (flonum? flonum? flonum? flonum? . -> . flonum? )
  )
 
-;;================================================================================
+;;==============================================================================
 
-;; Everything defined inside a begin-encourage-inline should
-;; be inlined, even when called from outside of this module.
+;; Everything defined inside a begin-encourage-inline should be inlined, even
+;; when called from outside of this module.
 (begin-encourage-inline
-  ;; I have no idea why is that, but when I place this function in
-  ;; the bezier-point  module (it's used only there) then it's
-  ;; performance drops significantly...
+  ;; I have no idea why is that, but when I place this function in the
+  ;; bezier-point module (it's used only there) then it's performance drops
+  ;; significantly...
   ;; TODO: figure out what is happenning.
+  ;; TODO: check if it still happens
   (define (distance x1 y1 x2 y2)
     (let ([x (fl- x1 x2)]
           [y (fl- y1 y2)])
@@ -30,9 +31,9 @@
 
 
 (begin-encourage-inline
-  ;; Early, non-optimised functions for computing bezier curve points and
-  ;; angles (derivative). They are used in unit tests where their results
-  ;; are compared with newer, optimised ones.
+  ;; Early, non-optimised functions for computing bezier curve points and angles
+  ;; (derivative). They are used in unit tests where their results are compared
+  ;; with newer, optimised ones.
   (define-syntax-rule (square n) (* n n))
 
   (define (naive-bezier^2 t a b c)
@@ -82,7 +83,7 @@
                 (fl* t (fl- (fl- (fl* 3.0 (fl* c t)) (fl* 2.0 c)) (fl* d t)))))))
 
 
-  ;;================================================================================
+  ;;============================================================================
 
   ;; Wrappers accepting a vector of points instead of points directly,
   ;; because the points are usually stored in a vector.
@@ -101,8 +102,7 @@
              (nth pts 0)
              (nth pts 1)
              (nth pts 2)
-             (nth pts 3)))
-  )
+             (nth pts 3))))
 
 
 (module+ test
@@ -149,8 +149,7 @@
        #;(displayln (format "~a    ~a"
                           (exact->inexact (deriv^3 t 20.0 30.0 40.0 120.0))
                           (exact->inexact (naive-deriv^3 t 20.0 30.0 40.0 120.0))))
-       ;; TODO: why do they differ by such a tiny value? Are they of different types
-       ;; like flonum vs. single flonum or something?
+       ;; TODO: why do they differ by such a tiny value?
        (check-= (exact->inexact (deriv^3 t 20.0 30.0 40.0 120.0))
                 (exact->inexact (naive-deriv^3 t 20.0 30.0 40.0 120.0))
                 0.0001))))

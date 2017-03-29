@@ -17,7 +17,9 @@ mouse:
 
 I'm refactoring the code right now to make it easier to draw objects other than
 text along the curve. Even if you don't need to draw such things reading the
-code may still be worthwhile if you want to learn about how Bezier curves work.
+code may still be worthwhile if you want to learn about how Bezier curves work -
+see `math.rkt`, `point.rkt`, `curve.rkt` and `curved-text.rkt`.
+
 The code is relatively straightforward and self-contained, it only depends on
 Racket for now.
 
@@ -80,3 +82,11 @@ A lot of things, but the most important are these:
 * add more unit tests and benchmarks
 * add some documentation and comments to the code
 * possibly improve the demo program to allow for more than one curve
+
+## Previous version
+
+Non-refactored, four years old version lives at
+https://github.com/piotrklibert/bezier/ - there's a module dependency graph
+there, although outdated. The only good thing about it is that I'm not working
+on it right now, so it should work, while the current one may become broken from
+time to time.
