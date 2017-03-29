@@ -7,13 +7,13 @@ too) along the cubic (and quadratic) Bezier curves. It's probably easier to show
 than describe, so here's a screenshot of DrRacket REPL showing the library in
 action:
 
-![](https://github.com/piotrklibert/bezier/raw/master/priv/demo-inline-screenshot.png)
+![](https://github.com/piotrklibert/curved-text/raw/master/priv/demo-inline-screenshot.png)
 
 In addition to the library itself there's a little GUI demo app, which displays
 a curved text and allows manipulating control points by dragging them with the
 mouse:
 
-![](https://github.com/piotrklibert/bezier/raw/master/priv/demo-screenshot.png)
+![](https://github.com/piotrklibert/curved-text/raw/master/priv/demo-screenshot.png)
 
 I'm refactoring the code right now to make it easier to draw objects other than
 text along the curve. Even if you don't need to draw such things reading the
