@@ -25,6 +25,7 @@
                 [font           default-font]
                 [control-radius 15]
                 [center-radius  20])
+    (super-new)
 
     ;; private fields
     (define controls       default-controls)
@@ -39,14 +40,9 @@
          min-animation-dist))
 
 
-    (define/private (get-control-radius)
-      (+ control-radius control-margin))
-
-    (define/private (get-control n)
-      (vector-ref controls n))
-
-    (define/public (get-endpoints)
-      (vector->list controls))
+    (define/private (get-control-radius) (+ control-radius control-margin))
+    (define/private (get-control n)      (vector-ref controls n))
+    (define/public  (get-endpoints)      (vector->list controls))
 
     ;; compute the "center of mass" for the four controls
     (define/public (get-center)
@@ -71,14 +67,7 @@
 
     ;; get-clicked-control: point -> (or/c number? #f)
     (define/private (get-clicked-control click-pos)
-      ;; return an index of clicked control or #false if none
-      ;; of them was clicked... no idea how to do this better
-      (cond
-        [(nth-clicked? 0 click-pos)]
-        [(nth-clicked? 1 click-pos)]
-        [(nth-clicked? 2 click-pos)]
-        [(nth-clicked? 3 click-pos)]
-        [else #false]))
+      (index-where (get-endpoints) (λ (c) (control-clicked? c click-pos))))
 
     ;; move-active-control!: point? -> void?
     (define/private (move-active-control! where)
@@ -127,7 +116,7 @@
       (set! controls (vector-map transform controls))
       (send this refresh))
 
-    ;; Move all controls away or towards the center.
+    ;; Move all controls away from or towards the center by a small distance.
     (define/public (scale-controls! direction)
       (define scale (if (member direction '(add #\+)) 1.2 0.8))
       (define transform (cut scale-point <> scale (get-center)))
@@ -141,12 +130,12 @@
     ;; KEYBOARD events
     (define/override (on-char event)
       (define key-code (send event get-key-code))
-
-      (when (not (equal? key-code 'release))
-        ;; on keydown but not on keyup
+      (when (not (equal? key-code 'release)) ; on keydown but not on keyup
         (cond
-          [(member key-code '(left right))   (rotate-controls! key-code)]
-          [(member key-code '(add subtract #\+ #\-)) (scale-controls! key-code)])))
+          [(member key-code '(left right))
+           (rotate-controls! key-code)]
+          [(member key-code '(add subtract #\+ #\-))
+           (scale-controls! key-code)])))
 
     ;; MOUSE events
     (define/override (on-event event)
@@ -191,6 +180,4 @@
         (draw-supporting-curve dc)
         (draw-controls dc)
         (draw-center dc)
-        (draw-text dc)))
-
-    (super-new)))
+        (draw-text dc)))))
