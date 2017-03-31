@@ -1,4 +1,5 @@
 #lang racket
+
 ;;
 ;; This module implements a point struct, which is used by every other modules
 ;; in this library. Additionaly defined here are procedures for converting from

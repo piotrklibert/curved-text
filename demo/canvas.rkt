@@ -55,9 +55,6 @@
         dc))
 
     ;; Helpers for handling mouse interaction with control points.
-    (define/private (nth-clicked? n pos)
-      (if (control-clicked? (get-control n) pos) n #f))
-
     (define/private (control-clicked? ctrl pos)
       (< (points-distance ctrl pos) (get-control-radius)))
 
@@ -66,8 +63,9 @@
          (+ center-radius control-margin)))
 
     ;; get-clicked-control: point -> (or/c number? #f)
-    (define/private (get-clicked-control click-pos)
-      (index-where (get-endpoints) (λ (c) (control-clicked? c click-pos))))
+    (define/private (get-clicked-control pos)
+      (define ctrl-clicked? (λ (c) (control-clicked? c pos)))
+      (index-where (get-endpoints) ctrl-clicked?))
 
     ;; move-active-control!: point? -> void?
     (define/private (move-active-control! where)
@@ -140,9 +138,7 @@
     ;; MOUSE events
     (define/override (on-event event)
       (let*
-          ( ;; click position
-           [mouse-pos (make-point (send event get-x) (send event get-y))]
-           ;; click event properties
+          ([mouse-pos (make-point (send event get-x) (send event get-y))]
            [down      (send event button-down?)]
            [up        (send event button-up?)]
            [dragging  (send event dragging?)]

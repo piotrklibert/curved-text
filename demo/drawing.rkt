@@ -1,16 +1,19 @@
 #lang racket
+
 ;;
-;; Not really a tests here; just something I quickly wrote when working on the
-;; code to help me visualize the impact that my changes had.
+;; These are not tests per se, just something I quickly wrote when working on
+;; the code to help me visualize the impact that my changes had.
 ;;
 ;; The test procedure creates a GUI window and displays a curved text in it
-;; and test-perf creates a curved-text repeteadly and reports the time it took.
+;; while test-perf creates a curved-text repeteadly and reports the time it
+;; took.
 ;;
 
 
 (require
-  srfi/26
-  racket/draw)
+ srfi/26
+ threading
+ racket/draw)
 
 (require
  curved-text/bezier/point
@@ -20,7 +23,7 @@
 (provide
   (contract-out
     [test (->* () (string? coords?) void?)]
-    [test-perf (-> number? void?)]))
+    [test-perf (->* () (number?) void?)]))
 
 (define test-control-points '((40 40) (5 200) (400 5) (550 350)))
 
@@ -30,25 +33,22 @@
       ([bmp   (make-empty-bitmap)]
        [dc    (get-dc bmp)]
        [path  (new dc-path%)]
-       [font  (make-font #:size 24 #:family 'roman #:weight 'bold)]
-       [curved-text (time (make-curved-text control-points word))])
-    (send dc set-smoothing 'smoothed)
+       [font  (make-font #:size 28 #:family 'roman #:weight 'bold)])
+    ;; setup the drawing context
+    (send* dc
+      (set-smoothing 'smoothed)
+      (set-text-foreground "blue")
+      (set-font font))
 
-    ;; draw curve
-    (send/apply path move-to  (car control-points))
-    (send/apply path curve-to (flatten (cdr control-points)))
-    (send dc draw-path path)
+    (draw-path dc control-points)       ; draw the supporting curve
+    (~> control-points                  ; draw the text along the curve
+      (make-curved-text word)
+      (draw-curved-text dc))
 
-    ;; draw curved text
-    (send dc set-text-foreground "blue")
-    (send dc set-font font)
-    (draw-curved-text curved-text dc)
-
-    ;; display
-    (show-plot bmp)))
+    (show-plot bmp)))                   ; display the bitmap
 
 
-(define (test-perf [n 200])
+(define (test-perf [n 500])
   (displayln
    (string-append "Creating " (number->string n) " curved text "
                   "instances took:"))
@@ -58,4 +58,5 @@
 
 
 (module+ main
+  (test-perf)
   (test "Sample text to curve!" '((102 316) (152 16) (610 27) (696 242))))

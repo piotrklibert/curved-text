@@ -63,7 +63,7 @@
   (-> curve? string? (vectorof point-and-angle?))
   (define word-length  (string-length word))
   (define curve-length (curve-len curve))
-  (define spacing      (/ curve-length word-length))
+  (define spacing      (/ curve-length (sub1 word-length)))
 
   (for/vector ([char-num (in-range word-length)])
     (get-point-at-dist curve (* spacing char-num))))
